@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Small examples to show different usages of moliana.
+Small examples to show different usages of Moliana.
 
 @author: Jens Möckel
 """
