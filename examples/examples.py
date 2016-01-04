@@ -21,8 +21,8 @@ def example1():
     pDym = os.path.join('C:\Program Files (x86)\Dymola 2016\\bin64','Dymola.exe')
     pLib = 'test_library'
 
-    dlc = moliana.DymolaMode(pLib, pDym, report_name ='example1', report_path = 'reports')
-    dlc.execute_check('html')
+    dm = moliana.DymolaMode(pLib, pDym, report_name ='example1', report_path = 'reports')
+    dm.execute_check('html')
 
     return True
 
@@ -41,8 +41,8 @@ def example2():
     rp_path = 'reports'
     lod = 3
 
-    dlc = moliana.DymolaMode(pLib, pDym, report_name = rp_name, report_path = rp_path, modelica_lib_depth = lod)
-    dlc.execute_check('html')
+    dm = moliana.DymolaMode(pLib, pDym, report_name = rp_name, report_path = rp_path, modelica_lib_depth = lod)
+    dm.execute_check('html')
 
     return True
 
@@ -63,8 +63,8 @@ def example3():
                'modelica_lib_depth' : 3,
                'modelica_lib_firstlevel' : 'L1Pck1'}
 
-    dlc = moliana.DymolaMode(pLib, pDym, **options)
-    dlc.execute_check('html')
+    dm = moliana.DymolaMode(pLib, pDym, **options)
+    dm.execute_check('html')
 
     return True
 
@@ -85,13 +85,13 @@ def example4():
                'report_path' : 'reports'}
 
     #First check
-    dlc = moliana.DymolaMode(pLib, pDym, **options)
-    dlc.execute_check('html')
+    dm = moliana.DymolaMode(pLib, pDym, **options)
+    dm.execute_check('html')
 
     #Second Check
-    dlc.report_name = 'example42'
-    dlc.report_colors = {'cFalse': 'blue'}
-    dlc.execute_check('html')
+    dm.report_name = 'example42'
+    dm.report_colors = {'cFalse': 'blue'}
+    dm.execute_check('html')
 
     return True
 
