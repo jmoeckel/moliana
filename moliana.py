@@ -691,14 +691,14 @@ class Report(object):
         """
         Compares this Report instance to the the instance rep2. An HTML is
         generated, which have the same layout as the usual HTML report, but
-        uses different colours: If a result of this Report instance is better
-        than the one of of rep2, the corresponding cell's background color is
-        set to green:
+        uses different colors:
+        If a result of this Report instance is better than the one of of rep2,
+        the corresponding cell's background color is set to green.
         If the result is worse, the cell's background color is set to red.
         If there is no change, cell's background color remains white.
 
-        The gets an additonal information, to which instance it has been
-        compared.
+        The new report has an additonal information, to which instance it has
+        been compared.
 
         ARGUMENTS:
         rep2 (Report):
