@@ -1,5 +1,5 @@
 # Moliana
-A Python written MOdelica LIbrary ANAlyser for Dymola.
+A Python written **MO**delica **LI**brary **ANA**lyser for Dymola.
 
 ## Overview
 Analysation of modelica libraries based on Dymolas `checkModel()`.
