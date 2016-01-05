@@ -81,7 +81,7 @@ def example4():
     pDym = os.path.join('C:\Program Files (x86)\Dymola 2016\\bin64','Dymola.exe')
     pLib = 'test_library'
 
-    options = {'report_name' : 'example41',
+    options = {'report_name' : 'example4',
                'report_path' : 'reports'}
 
     #First check
@@ -89,7 +89,7 @@ def example4():
     dm.execute_check('html')
 
     #Second Check
-    dm.report_name = 'example42'
+    dm.report_name = 'example4_with_changed_colors'
     dm.report_colors = {'cFalse': 'blue'}
     dm.execute_check('html')
 
