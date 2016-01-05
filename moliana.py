@@ -33,11 +33,11 @@ This module provides
         Converts content of Report instances to HTML files and vice versa
 
 EXAMPLES:
-Several examples are provided on ''.
+Several examples are provided on 'https://github.com/jmoeckel/moliana/wiki/Examples'.
 
 API:
 Each class contains a full documentation of the provided API. Furthermore, an
-overview is given on ''.
+overview is given on 'https://github.com/jmoeckel/moliana/wiki/UserInterface'.
 
 SOFTWARE REQUIREMENTS:
 - This module has been implemented and tested with Python 3.4.3 on a Windows 7
