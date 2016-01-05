@@ -46,10 +46,10 @@ class TestMolianaMethods(unittest.TestCase):
     def test_example4(self):
         self.assertIs(examples.example4(),True)
 
-        validated1, new1 = self._readReport('example41')
+        validated1, new1 = self._readReport('example4')
         self.assertListEqual(new1,validated1)
 
-        validated2, new2 = self._readReport('example42')
+        validated2, new2 = self._readReport('example4_with_changed_colors')
         self.assertListEqual(new2,validated2)
 
     def test_example5(self):
