@@ -33,11 +33,11 @@ This module provides
         Converts content of Report instances to HTML files and vice versa
 
 EXAMPLES:
-Several examples are given on 'https://github.com/jmoeckel/moliana/wiki/Examples'.
+Several examples are provided on ''.
 
 API:
 Each class contains a full documentation of the provided API. Furthermore, an
-overview is given on 'https://github.com/jmoeckel/moliana/wiki/UserInterface'.
+overview is given on ''.
 
 SOFTWARE REQUIREMENTS:
 - This module has been implemented and tested with Python 3.4.3 on a Windows 7
@@ -299,9 +299,6 @@ class DymolaMode(object):
         #path within library in modelica syntax
         pmoCurEl = pCurEl.replace(os.path.dirname(self.modelica_lib_path)+'\\','').replace('\\','.')
         pModel = pmoCurEl[pmoCurEl.index('.')+1:]
-        
-        #replace \ with / to escape \t,\b etc
-        pathFP = self._logFP.replace('\\','/')
 
         #actually applying the check and saving the result
         moCode = ["if bCheck then ",
@@ -314,9 +311,9 @@ class DymolaMode(object):
                   "else ",
                   "nWarnings = \"1\"; "
                   "end if; ",
-                  "Modelica.Utilities.Streams.print(\"{} True 0 \" + nWarnings,\"{}\"); ".format(pModel, pathFP),
+                  "Modelica.Utilities.Streams.print(\"{} True 0 \" + nWarnings,\"{}\"); ".format(pModel, self._logFP),
                   "else ",
-                  "Modelica.Utilities.Streams.print(\"{} True 0 0\",\"{}\"); ".format(pModel, pathFP),
+                  "Modelica.Utilities.Streams.print(\"{} True 0 0\",\"{}\"); ".format(pModel, self._logFP),
                   "end if; ",
                   "else ",
                   "s = getLastError(); ",
@@ -335,10 +332,10 @@ class DymolaMode(object):
                   "else ",
                   "nWarnings = \"1\"; "
                   "end if; ",
-                  "Modelica.Utilities.Streams.print(\"{} False \" + nErrors + \" \" + nWarnings,\"{}\"); ".format(pModel, pathFP),
+                  "Modelica.Utilities.Streams.print(\"{} False \" + nErrors + \" \" + nWarnings,\"{}\"); ".format(pModel, self._logFP),
                   "else ",
                   "if Modelica.Utilities.Strings.findLast(s,\"Did not find model\")>0 then ",
-                  "Modelica.Utilities.Streams.print(\"{} Not_found 0 0\",\"{}\"); ".format(pModel, pathFP),
+                  "Modelica.Utilities.Streams.print(\"{} Not_found 0 0\",\"{}\"); ".format(pModel, self._logFP),
                   "end if; ",
                   "end if; ",
                   "end if; "]
