@@ -300,6 +300,9 @@ class DymolaMode(object):
         pmoCurEl = pCurEl.replace(os.path.dirname(self.modelica_lib_path)+'\\','').replace('\\','.')
         pModel = pmoCurEl[pmoCurEl.index('.')+1:]
 
+        #replace \ with / to escape \t,\b etc
+        pathFP = self._logFP.replace('\\','/')
+
         #actually applying the check and saving the result
         moCode = ["if bCheck then ",
                   "s = getLastError(); ",
@@ -311,9 +314,9 @@ class DymolaMode(object):
                   "else ",
                   "nWarnings = \"1\"; "
                   "end if; ",
-                  "Modelica.Utilities.Streams.print(\"{} True 0 \" + nWarnings,\"{}\"); ".format(pModel, self._logFP),
+                  "Modelica.Utilities.Streams.print(\"{} True 0 \" + nWarnings,\"{}\"); ".format(pModel, pathFP),
                   "else ",
-                  "Modelica.Utilities.Streams.print(\"{} True 0 0\",\"{}\"); ".format(pModel, self._logFP),
+                  "Modelica.Utilities.Streams.print(\"{} True 0 0\",\"{}\"); ".format(pModel, pathFP),
                   "end if; ",
                   "else ",
                   "s = getLastError(); ",
@@ -332,10 +335,10 @@ class DymolaMode(object):
                   "else ",
                   "nWarnings = \"1\"; "
                   "end if; ",
-                  "Modelica.Utilities.Streams.print(\"{} False \" + nErrors + \" \" + nWarnings,\"{}\"); ".format(pModel, self._logFP),
+                  "Modelica.Utilities.Streams.print(\"{} False \" + nErrors + \" \" + nWarnings,\"{}\"); ".format(pModel, pathFP),
                   "else ",
                   "if Modelica.Utilities.Strings.findLast(s,\"Did not find model\")>0 then ",
-                  "Modelica.Utilities.Streams.print(\"{} Not_found 0 0\",\"{}\"); ".format(pModel, self._logFP),
+                  "Modelica.Utilities.Streams.print(\"{} Not_found 0 0\",\"{}\"); ".format(pModel, pathFP),
                   "end if; ",
                   "end if; ",
                   "end if; "]
