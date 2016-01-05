@@ -8,7 +8,7 @@ Small examples to show different usages of Moliana.
 import os
 os.chdir('..')
 import moliana
-os.chdir('./example')
+os.chdir('./examples')
 
 ###############################################################################
 def example1():
@@ -150,4 +150,4 @@ def example7():
     return True
 
 if __name__ == "__main__":
-    example1()
+    example7()

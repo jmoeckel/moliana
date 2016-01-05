@@ -8,7 +8,7 @@ Test different parts of Moliana.
 import os
 import unittest
 
-os.chdir('../example')
+os.chdir('../examples')
 import examples
 
 class TestMolianaMethods(unittest.TestCase):
