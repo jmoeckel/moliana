@@ -969,7 +969,7 @@ class Converter(object):
         """
 
         sTag0 = '\n\t<body>'
-        sTitle = '\n\t\t<h2>Test Results</h2>'
+        sTitle = '\n\t\t<h2>{}</h2>'.format(report.name)
         sTableDisp = self._generate_html_table_disp(report)
         sTableCont = self._generate_html_table_content(report)
         sTag1 = '\n\t</body>'
