@@ -8,7 +8,7 @@ Small examples to show different usages of Moliana.
 import os
 os.chdir('..')
 import moliana
-os.chdir('./example')
+os.chdir('./examples')
 
 ###############################################################################
 def example1():
