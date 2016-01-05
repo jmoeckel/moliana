@@ -1,4 +1,4 @@
-within TestModelicaLibrary;
+within test_library;
 package L1Pck5_OneFile
   package L2Pck1
     package L3Pck1

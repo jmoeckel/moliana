@@ -1,4 +1,4 @@
-within TestModelicaLibrary.L1Pck1.L2Pck1.L3Pck1;
+within test_library.L1Pck1.L2Pck1.L3Pck1;
 model L4Model_warning
 
   connector A
