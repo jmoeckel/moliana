@@ -376,7 +376,7 @@ class DymolaMode(object):
 
     def _get_branch(self,modelica_lib_path):
         """
-        Get the current HEAD of the git repository (if the chosen library is
+        Get the current branch of the git repository (if the chosen library is
         actually one).
 
         ARGUMENTS:
@@ -389,16 +389,16 @@ class DymolaMode(object):
             else: empty string.
         """
 
-        fp = os.path.join(modelica_lib_path,'.git','HEAD')
-
-        try:
-            with open(fp) as file:
-                s = file.read()
-
-            branch = s[s.rfind('/')+1:]
+        currentDir = os.getcwd();
+        os.chdir(modelica_lib_path)
+        try: 
+           s = subprocess.check_output('git branch',universal_newlines=True) 
+           
+           branch = s[s.find('*')+1:s.find('\n',s.find('*'))].strip()
         except:
-            branch = 'no git'
+           branch = 'no git'
 
+        os.chdir(currentDir)
         return branch
 
 
