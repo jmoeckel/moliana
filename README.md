@@ -30,17 +30,17 @@ dlc.execute_check('html')
 ```
 This will apply `DymolaMode` to the Modelica library `TestModelicaLibrary`. An Html report with file name `example.html` is generated in the folder `reports`. Both, the folder `reports` as well as the library are stored in the folder `examples`.
 
-More examples, especially one that shows how to compare reports, can be found in [`./examples/examples.py`](./examples/examples.py) or in the [Examples](./wiki/Examples) section of the  [wiki](./wiki).
+More examples, especially one that shows how to compare reports, can be found in [`./examples/examples.py`](https://github.com/jmoeckel/moliana/blob/master/examples/examples.py) or in the [Examples](https://github.com/jmoeckel/moliana/wiki/Examples) section of the  [wiki](https://github.com/jmoeckel/moliana/wiki).
 
 ## Documentation of the API
-Take a look at the [source code](./moliana.py) of Moliana or at the [wiki](./wiki). In both places, the complete user-interface of Moliana is documented.
+Take a look at the [source code](https://github.com/jmoeckel/moliana/blob/master/moliana.py) of Moliana or at the [wiki](https://github.com/jmoeckel/moliana/wiki). In both places, the complete user-interface of Moliana is documented.
 
 ## Software Requirements
 * This module has been implemented and tested with Python 3.4.3 on a Windows 7 and Windows 10 platform.
 * DymolaMode requires Dymola 2016 or newer.
 
 ## License
-Moliana comes along with a GNU General Public License (see file [`LICENSE.txt`](./LICENSE.txt)). Additional information can be found in the header of [`moliana.py`](./moliana.py).
+Moliana comes along with a GNU General Public License (see file [`LICENSE.txt`](https://github.com/jmoeckel/moliana/blob/master/LICENSE.txt)). Additional information can be found in the header of [`moliana.py`](../../moliana.py).
 
 ## Further Development  
 Of course, there are many more possibilities on how to make Molina more 'powerful', but the current version matches the original purpose quite well. So to keep the usage of Moliana as simple as possible, developments will depend on actual usecases, i.e. what functionality could ease the handling of Moliana, which property is missing.  
