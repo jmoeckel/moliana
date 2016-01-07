@@ -14,6 +14,7 @@ Furthermore it is possible to compare one set of results to a different one (as 
 Of course this could be used for different usecases, but its main purpose is the usecase of software development using versioning systems as git or svn and to ease the process of assuring quality when merging development branches to the master.  
 
 Moliana provides following classes:
+
 * `DymolaMode`: Automated execution of Dymolas `checkModel()`.
 * `Report`: Representation and comparison of results.
 * `Converter`: Conversion of Report instances to HTML files and vice versa.
