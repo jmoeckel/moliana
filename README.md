@@ -40,7 +40,7 @@ Take a look at the [source code](https://github.com/jmoeckel/moliana/blob/master
 * DymolaMode requires Dymola 2016 or newer.
 
 ## License
-Moliana comes along with a GNU General Public License (see file [`LICENSE.txt`](https://github.com/jmoeckel/moliana/blob/master/LICENSE.txt)). Additional information can be found in the header of [`moliana.py`](../../moliana.py).
+Moliana comes along with a GNU General Public License (see file [`LICENSE.txt`](https://github.com/jmoeckel/moliana/blob/master/LICENSE.txt)). Additional information can be found in the header of [`moliana.py`](https://github.com/jmoeckel/moliana/blob/master/moliana.py).
 
 ## Further Development  
 Of course, there are many more possibilities on how to make Molina more 'powerful', but the current version matches the original purpose quite well. So to keep the usage of Moliana as simple as possible, developments will depend on actual usecases, i.e. what functionality could ease the handling of Moliana, which property is missing.  
