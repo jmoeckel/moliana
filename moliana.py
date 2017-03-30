@@ -47,9 +47,8 @@ SOFTWARE REQUIREMENTS:
 
 import os;
 import subprocess;
-import win32ui;
-import dde;
-import time;
+import sys
+import re
 
 ##############################################################################
 class DymolaMode(object):
@@ -144,7 +143,7 @@ class DymolaMode(object):
         #check if all options are allowed
         _Validator('general_kwargs',kwargs,self._options)
 
-        #fill non chosen options with none
+        #fill non chosen options with None
         for option in self._options:
              if not option in kwargs:
                  kwargs[option] = None
@@ -165,17 +164,16 @@ class DymolaMode(object):
         #additional variables
         self._Report = Report()
         self._modelica_lib_firstlevel_mosyntax =  self.modelica_lib_firstlevel.replace(os.path.dirname(self.modelica_lib_path)+'\\','').replace('\\','.')
-        self._logFP = os.path.join(self.modelica_lib_firstlevel,'checklog.Log')
-        self._ddeServer = None
-        self._ddeConv = None
+
 
 
         if self._modelica_lib_firstlevel_mosyntax[-1]=='.':
             self._modelica_lib_firstlevel_mosyntax = self._modelica_lib_firstlevel_mosyntax[:-1]
 
+
     #PUBLIC API
     ###########################################################################
-    def execute_check(self,flag=None):
+    def execute_check(self, flag=None):
         """
         Applies Dymolas checkModel() to chosen packages/models.
 
@@ -186,24 +184,26 @@ class DymolaMode(object):
         RETURNS:
         A Report instance, which contains the results of the check.
         """
+        
+        # sample all considered models and adapt the path for Dymola-internal use
+        dirpath = os.path.join(self.modelica_lib_path, self.modelica_lib_firstlevel)
+        models = self._get_models_of_modelica_library_recursively(dirpath,[])
+        models = [model.replace(self.modelica_lib_path, os.path.basename(self.modelica_lib_path)).replace('\\','.') for model in models]
 
-        #delete old log file (if existing)
-        try:
-            os.remove(self._logFP)
-        except OSError:
-            pass
-
-        #open Dymola and load Library
-        self._establish_dymola_connection()
-
+        # open Dymola and load Library
+        dymola = self._establish_dymola_connection()
+        
         #check recursivley the library
-        self._manage_recursive_lib_check(self.modelica_lib_firstlevel,1)
+        results = []
+        for model in models:
+            dic = self._executing_dymola_checkModel(dymola, model)
+            results.append(dic)
 
         #fill report element with data from logfile
-        self._fill_report()
+        self._fill_report(results)
 
         #cleaning up
-        self._cleanUp()
+        self._cleanUp(dymola)
 
         if flag == 'html':
             self._Report.generate_html()
@@ -228,25 +228,27 @@ class DymolaMode(object):
         """
         Establish connection to Dymola and load chosen library.
         Also parameter 'Advanced.PedanticModelica' is set.
+        
+        RETURNS:
+        dymola: an instance of the DymolaInterface
         """
 
-        #Establish connection
-        self._ddeServer = dde.CreateServer();
-        self._ddeServer.Create("TestClient");
-        self._ddeConv = dde.CreateConversation(self._ddeServer);
-
+        sys.path.append("C:\\Program Files (x86)\\Dymola 2017 FD01\\Modelica\\Library\\python_interface\\dymola.egg")
+        from dymola.dymola_interface import DymolaInterface
+        
         #open Dymola
-        subprocess.Popen(self.dymola_path, stdin=subprocess.PIPE);
-        time.sleep(10);
-        self._ddeConv.ConnectTo("dymola", " ");
+        dymola = DymolaInterface()
 
         #open library
-        self._ddeConv.Exec("openModel(\"" + os.path.join(self.modelica_lib_path,'package.mo').replace('\\', '/') + "\")");
+        dymola.ExecuteCommand("Advanced.PedanticModelica = {}".format(self.dymola_pedantic))
+        
+        #activate Modelica pedantic check        
+        dymola.openModel(os.path.join(self.modelica_lib_path,'package.mo'))
+        
+        return dymola
 
-        #activate Modelica pedantic check
-        self._ddeConv.Exec("Advanced.PedanticModelica={}".format(str(self.dymola_pedantic).lower()));
-
-    def _manage_recursive_lib_check(self, curPckDP, curLevel):
+        
+    def _get_models_of_modelica_library_recursively(self, curPckDP, models):
         """
         Recursively assembling paths of all to be considered packages/models up
         to the chosen level of detail.
@@ -254,128 +256,112 @@ class DymolaMode(object):
         ARGUMENTS:
         curPckDP: path to a directory, which must be a package, e.g. containing
                   a file package.order (string)
-        curLevel: Level of curPckDP within the library starting from chosen
-                  TopPackage (int)
+        RETURNS:
+        models: list of considered models
         """
-
-        #only check, if it is a package
-        if not os.path.exists(os.path.join(curPckDP,'package.order')):
+    
+        if not os.path.exists(os.path.join(curPckDP, 'package.order')):
             return
+        
+        with open(os.path.join(curPckDP, 'package.order')) as file:
+            lContent = file.read().splitlines()
+            
+        for elem in lContent:
+    
+            # path for filesystem
+            pCurEl = os.path.join(curPckDP,elem)
+    
+            # if it is dir/pck -> go one step further,
+            # if not, it is a mo file -> add to list
+            if os.path.isdir(pCurEl):
+                self._get_models_of_modelica_library_recursively(pCurEl,models)
+    
+            else:
+                models.append(pCurEl)
+                
+        return models
+        
 
-        with open(os.path.join(curPckDP,'package.order')) as file:
-            lContent = file.read().splitlines();
-
-        #check if max LoD is reached
-        if self.modelica_lib_depth ==-1  or curLevel < self.modelica_lib_depth:
-
-            for elem in lContent:
-
-                #path for filesystem
-                pCurEl = os.path.join(curPckDP,elem)
-
-                #if it is dir/pck -> go one step further,
-                #if not, it is a mo file -> check
-                if os.path.isdir(pCurEl):
-                    self._manage_recursive_lib_check(pCurEl,curLevel+1)
-
-                else:
-                    self._executing_dymola_checkModel(pCurEl)
-        else:
-
-            for elem in lContent:
-                self._executing_dymola_checkModel(os.path.join(curPckDP,elem))
-
-
-    def _executing_dymola_checkModel(self, pCurEl):
+    def _executing_dymola_checkModel(self, dymola, model):
         """
         Applied Dymolas checkModel() to a given package/model.
         Results are written to a .log file (this is executed within Dymola).
 
         ARGUMENT:
-        pCurEl: path (using back-slashes) to current package/model that is
-                supposed to be checked by checkModel() (string)
+        dymola: an instance of DymolaInterface
+        model: string, path of considered model in Modelica notification
+        
+        RETURNS:
+        dic, dictionary, that contains the results of a test
         """
 
-        #path within library in modelica syntax
-        pmoCurEl = pCurEl.replace(os.path.dirname(self.modelica_lib_path)+'\\','').replace('\\','.')
-        pModel = pmoCurEl[pmoCurEl.index('.')+1:]
+        success = dymola.checkModel(model)
+        lerr = dymola.getLastError()
+        
+        nErr = len(re.findall('Error:', lerr))
+        nWrn = len(re.findall('Warning:', lerr))    
+        
+        if not success:
+            res = False
+        elif nWrn > 0:
+            res = True
+        else:
+            res = True
+            
+        lines = lerr.splitlines()
+        if not success and nErr == 0:
+            notes = [lines[1]]
+        elif nErr > 0 or nWrn > 0:
+            notes = [line for line in lines if line.startswith('Error:') or line.startswith('Warning:')]
+        else:
+            notes = []
+        
+        dic = {'Pck': model,
+               'Res': res,
+               'Err': nErr,
+               'Wrn': nWrn,
+               'Notes': '<br/>'.join(notes), 
+               'colPck': 'white',
+               'colRes': '{}'.format(self._Report.colors['cTrue'] if res ==True else self._Report.colors['cFalse']),
+               'colErr': '{}'.format('white' if nErr==0 else self._Report.colors['cErr']),
+               'colWrn': '{}'.format('white' if nWrn==0 else self._Report.colors['cWrn'])
+               }
+        
+        return dic
 
-        #replace \ with / to escape \t,\b etc
-        pathFP = self._logFP.replace('\\','/')
-
-        #actually applying the check and saving the result
-        moCode = ["if bCheck then ",
-                  "s = getLastError(); ",
-                  "indW1 = Modelica.Utilities.Strings.findLast(s,\"WARNING:\"); ",
-                  "if indW1>0 then ",
-                  "indW2 = Modelica.Utilities.Strings.findLast(s,\" warnings were issued\"); ",
-                  "if indW2 >0 then ",
-                  "nWarnings = Modelica.Utilities.Strings.substring(s,indW1+9,indW2-1); ",
-                  "else ",
-                  "nWarnings = \"1\"; "
-                  "end if; ",
-                  "Modelica.Utilities.Streams.print(\"{} True 0 \" + nWarnings,\"{}\"); ".format(pModel, pathFP),
-                  "else ",
-                  "Modelica.Utilities.Streams.print(\"{} True 0 0\",\"{}\"); ".format(pModel, pathFP),
-                  "end if; ",
-                  "else ",
-                  "s = getLastError(); ",
-                  "indE1 = Modelica.Utilities.Strings.findLast(s,\"ERROR:\"); ",
-                  "if indE1>0 then ",
-                  "indE2 = Modelica.Utilities.Strings.findLast(s,\" errors were found\"); ",
-                  "if indE2 >0 then ",
-                  "nErrors = Modelica.Utilities.Strings.substring(s,indE1+7,indE2-1); ",
-                  "else ",
-                  "nErrors = \"1\"; ",
-                  "end if; ",
-                  "indW1 = Modelica.Utilities.Strings.findLast(s,\"WARNING:\"); ",
-                  "indW2 = Modelica.Utilities.Strings.findLast(s,\" warnings were issued\"); ",
-                  "if indW2 >0 then ",
-                  "nWarnings = Modelica.Utilities.Strings.substring(s,indW1+9,indW2-1); ",
-                  "else ",
-                  "nWarnings = \"1\"; "
-                  "end if; ",
-                  "Modelica.Utilities.Streams.print(\"{} False \" + nErrors + \" \" + nWarnings,\"{}\"); ".format(pModel, pathFP),
-                  "else ",
-                  "if Modelica.Utilities.Strings.findLast(s,\"Did not find model\")>0 then ",
-                  "Modelica.Utilities.Streams.print(\"{} Not_found 0 0\",\"{}\"); ".format(pModel, pathFP),
-                  "end if; ",
-                  "end if; ",
-                  "end if; "]
-
-        smoCode =  " ".join("{}".format(row) for row in moCode)
-        self._ddeConv.Exec("bCheck = checkModel(\"{}\"); ".format(pmoCurEl))
-        self._ddeConv.Exec(smoCode)
+            
+        
 
 
-    def _fill_report(self):
+    def _fill_report(self, results):
         """
         Report instance is filled with all available informations.
         """
 
-        #set reports attributes equal to user settings or default values
+        # set reports attributes equal to user settings or default values
         self._Report.name = self.report_name or 'report'
         self._Report.path = self.report_path or self.modelica_lib_firstlevel
         self._Report.mode = self.report_mode or 'full'
-        self._Report.disp = self.report_disp or [{'Key':'Checked Library', 'Val':self._modelica_lib_firstlevel_mosyntax},
-                                                     {'Key':'Pedantic Mode', 'Val': self.dymola_pedantic},
-                                                     {'Key':'Level of Detail', 'Val': self.modelica_lib_depth},
-                                                     {'Key':'Branch', 'Val': self._get_branch(self.modelica_lib_path)}]
+        self._Report.disp = self.report_disp or [{'Key': 'Checked Library', 'Val': self._modelica_lib_firstlevel_mosyntax},
+                                                 {'Key': 'Pedantic Mode', 'Val': self.dymola_pedantic},
+                                                 {'Key': 'Level of Detail', 'Val': self.modelica_lib_depth},
+                                                 {'Key': 'Branch', 'Val': self._get_branch(self.modelica_lib_path)}]
 
-        #set meta data
-        self._Report.meta = {'pck':self._modelica_lib_firstlevel_mosyntax,
-                             'ped':self.dymola_pedantic,
-                             'lod':self.modelica_lib_depth,
-                             'git':self._get_branch(self.modelica_lib_path),
-                             'viewport':'width=device-width, initial-scale=1.0, user-scalable=yes'}
+        # set meta data
+        self._Report.meta = {'pck': self._modelica_lib_firstlevel_mosyntax,
+                             'ped': self.dymola_pedantic,
+                             'lod': self.modelica_lib_depth,
+                             'git': self._get_branch(self.modelica_lib_path),
+                             'viewport': 'width=device-width, initial-scale=1.0, user-scalable=yes'}
 
-        #replace default colors with user input
+        # replace default colors with user input
         if self.report_colors:
             for key in self.report_colors:
                 self._Report.colors[key] = self.report_colors[key]
 
-        #read content from logfile
-        self._Report.cont = self._read_log(self._logFP)
+        # add results to _Report
+        self._Report.cont = results
+        
 
     def _get_branch(self,modelica_lib_path):
         """
@@ -403,62 +389,16 @@ class DymolaMode(object):
 
         os.chdir(currentDir)
         return branch
+        
 
-
-    def _read_log(self,logFP):
+    def _cleanUp(self, dymola):
         """
-        Content of .log file is read and returned as a list of dictionaries
-
-        ARGUMENT:
-        logFP (string):
-            filepath of log file
-
-        RETURN:
-        lst (list of dictionaries):
-            actual results of the check
-        """
-
-        #validate, that logfile exist
-        _Validator('general_filepath','logfile',logFP)
-
-        #read in logfile and save to cont
-        lst = []
-        with open(logFP) as file:
-            for line in file:
-                dic = {}
-                (pck,res,err,wrn) = line.split()
-                dic['Pck']=pck
-                dic['Res']=res.capitalize()
-                dic['Err']=err
-                dic['Wrn']=wrn
-
-                dic['colPck']= 'white'
-                dic['colRes']='{}'.format(self._Report.colors['cTrue'] if dic['Res']=='True' else self._Report.colors['cFalse'] if dic['Res']=='False' else self._Report.colors['cNF'])
-                dic['colErr']='{}'.format('white' if dic['Err']=='0' else self._Report.colors['cErr'])
-                dic['colWrn']='{}'.format('white' if dic['Wrn']=='0' else self._Report.colors['cWrn'])
-
-                lst.append(dic)
-
-        return lst
-
-
-    def _cleanUp(self):
-        """
-        Several actions after finishing the library check, e.g. closing Dymola
-        or deleting the temporarily .log file
+        Several actions after finishing the library check, e.g. closing Dymola        
         """
 
         #close dymola
-        self._ddeConv.Exec('exit()')
+        dymola.close()
 
-        #shutdown server
-        self._ddeServer.Shutdown()
-
-        #delete log file
-        try:
-            os.remove(self._logFP)
-        except OSError:
-            pass
 
 
     ###########################################################################
@@ -1107,6 +1047,7 @@ class Converter(object):
                '\n\t\t\t\t<th style=\"padding-right: 1em; padding-left: 1em; text-align: center\">Result</th>',
                '{}'.format('\n\t\t\t\t<th style=\"padding-right: 1em; padding-left: 1em; text-align: center\">Errors</th>' if mode=='full' else ''),
                '{}'.format('\n\t\t\t\t<th style=\"padding-right: 1em; padding-left: 1em; text-align: center\">Warnings</th>' if mode=='full' else ''),
+               '{}'.format('\n\t\t\t\t<th style=\"padding-right: 1em; padding-left: 1em; text-align: center\">Notes</th>' if mode=='full' else ''),
                '\n\t\t\t</tr>']
 
         srow = ''.join('{}'.format(r) for r in row)
@@ -1137,6 +1078,7 @@ class Converter(object):
                '\n\t\t\t\t<td id=\"Res\" style={}>{}</td>'.format(style.format('center','{}'.format(dic['colRes'])), dic['Res']),
                '{}'.format('\n\t\t\t\t<td id=\"Err\" style={}>{}</td>'.format(style.format('center','{}'.format(dic['colErr'])), dic['Err']) if mode=='full' else ''),
                '{}'.format('\n\t\t\t\t<td id=\"Wrn\" style={}>{}</td>'.format(style.format('center','{}'.format(dic['colWrn'])), dic['Wrn']) if mode=='full' else ''),
+               '{}'.format('\n\t\t\t\t<td id=\"Wrn\" style={}>{}</td>'.format(style.format('left','{}'.format('white')), dic['Notes']) if mode=='full' else ''),
                '\n\t\t\t</tr>']
 
         srow = ''.join('{}'.format(r) for r in row)
@@ -1447,7 +1389,7 @@ class _Validator(object):
             self._validate_general_instance('cont',val,list,'list')
             for elem in val:
                 assert isinstance(elem,dict), '\n\n => Each entry in \'cont\' must be a dictionary, but entry [{}] is \'{}\'! <='.format(elem,elem.__class__)
-                self._validate_general_key_in_dict('cont', elem, ['Pck', 'Res', 'Err', 'Wrn', 'colPck', 'colRes', 'colWrn', 'colErr'])
+                self._validate_general_key_in_dict('cont', elem, ['Pck', 'Res', 'Err', 'Wrn', 'Notes', 'colPck', 'colRes', 'colWrn', 'colErr'])
 
 
     def _validate_report_meta(self,val):
