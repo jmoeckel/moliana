@@ -316,21 +316,19 @@ class DymolaMode(object):
         else:
             notes = []
         
-        dic = {'Pck': model,
-               'Res': res,
-               'Err': nErr,
-               'Wrn': nWrn,
-               'Notes': '<br/>'.join(notes), 
-               'colPck': 'white',
-               'colRes': '{}'.format(self._Report.colors['cTrue'] if res ==True else self._Report.colors['cFalse']),
-               'colErr': '{}'.format('white' if nErr==0 else self._Report.colors['cErr']),
-               'colWrn': '{}'.format('white' if nWrn==0 else self._Report.colors['cWrn'])
-               }
+
+        dic = {'Pck': model.replace('{}.'.format(self._modelica_lib_firstlevel_mosyntax),''),
+           'Res': res,
+           'Err': nErr,
+           'Wrn': nWrn,
+           'Notes': '<br/>'.join(notes), 
+           'colPck': 'white',
+           'colRes': '{}'.format(self._Report.colors['cTrue'] if res ==True else self._Report.colors['cFalse']),
+           'colErr': '{}'.format('white' if nErr==0 else self._Report.colors['cErr']),
+           'colWrn': '{}'.format('white' if nWrn==0 else self._Report.colors['cWrn'])
+           }     
         
         return dic
-
-            
-        
 
 
     def _fill_report(self, results):
@@ -511,8 +509,8 @@ class Report(object):
         Key-value pairs of informations, that should be printed to the report.
         Mandatory keys: 'Key', 'Val',
         Example: disp = [{'Key':'Library', 'Val':Lib},
-                         {'Key''Pedantic Mode', 'Val':False},
-                         {'Key''Level of Detail', 'Val':1}]
+                         {'Key':'Pedantic Mode', 'Val':False},
+                         {'Key':'Level of Detail', 'Val':1}]
 
     cont (list of dictionaries, default=None):
         Content of the report, so the actual results of the check including
