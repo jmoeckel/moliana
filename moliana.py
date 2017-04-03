@@ -49,6 +49,13 @@ import os;
 import subprocess;
 import sys
 import re
+import logging
+import logging.config
+
+logging.config.fileConfig('logging.conf')
+logger = logging.getLogger('Moliana')
+
+logger.info('Welcome to Moliana')
 
 ##############################################################################
 class DymolaMode(object):
@@ -131,6 +138,7 @@ class DymolaMode(object):
 
     def __init__(self, modelica_lib_path, dymola_path, **kwargs):
 
+                      
         self.modelica_lib_path = os.path.abspath(modelica_lib_path)
         self.dymola_path = dymola_path
 
@@ -195,14 +203,17 @@ class DymolaMode(object):
         
         #check recursivley the library
         results = []
+        logger.info('Starting to check models. Checking ...')
         for model in models:
+            logger.info('... {}'.format(model))
             dic = self._executing_dymola_checkModel(dymola, model)
             results.append(dic)
+        logger.info('Finished ({} models have been checked)'.format(len(models)))
 
         #fill report element with data from logfile
         self._fill_report(results)
-
-        #cleaning up
+        
+        #cleaning up        
         self._cleanUp(dymola)
 
         if flag == 'html':
@@ -233,17 +244,27 @@ class DymolaMode(object):
         dymola: an instance of the DymolaInterface
         """
 
-        sys.path.append("C:\\Program Files (x86)\\Dymola 2017 FD01\\Modelica\\Library\\python_interface\\dymola.egg")
-        from dymola.dymola_interface import DymolaInterface
+        logger.info('Establishing connection to Dymola ...')
+        sys.path.append(os.path.join(self.dymola_path, 'Modelica\\Library\\python_interface\\dymola.egg'))
+        from dymola.dymola_interface import DymolaInterface        
+        logger.info('... Done')
         
         #open Dymola
+        logger.info('Instantiating Dymola interface ...')
         dymola = DymolaInterface()
-
-        #open library
+        logger.info('... Done')
+        
+        #activate Modelica pedantic check   
         dymola.ExecuteCommand("Advanced.PedanticModelica = {}".format(self.dymola_pedantic))
         
-        #activate Modelica pedantic check        
-        dymola.openModel(os.path.join(self.modelica_lib_path,'package.mo'))
+        #open library     
+        logger.info('Loading Modelica library ...')
+        success = dymola.openModel(os.path.join(self.modelica_lib_path,'package.mo'))
+        if success:
+            logger.info('... Done')
+        else:
+            logger.error('... Library not loaded')
+                
         
         return dymola
 
@@ -393,7 +414,9 @@ class DymolaMode(object):
         """
         Several actions after finishing the library check, e.g. closing Dymola        
         """
-
+        
+        logger.info('Cleaning up')
+        
         #close dymola
         dymola.close()
 
