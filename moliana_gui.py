@@ -11,14 +11,18 @@ import tkinter
 import moliana
 import webbrowser
 
+import logger
+
 from tkinter import filedialog
+from tkinter import ttk
 from tkinter import INSERT
 
-        
-class WidgetLogger(moliana.logging.Handler):
+log = logger.configure('GUI','logs')
+       
+class WidgetLogger(logger.logging.Handler):
     def __init__(self, widget):
-        moliana.logging.Handler.__init__(self)
-        self.setLevel(moliana.logging.INFO)
+        logger.logging.Handler.__init__(self)        
+        self.setLevel(logger.logging.INFO)
         self.widget = widget
         self.widget.config(state='disabled')
 
@@ -49,7 +53,8 @@ class Moliana_Gui(tkinter.Tk):
         self.master = master    
         self.create_widgets()  
 
-        moliana.logger.addHandler(WidgetLogger(self.WIDGETS['tf_logger']))         
+        log.addHandler(WidgetLogger(self.WIDGETS['tf_logger'])) 
+        log.info('Welcome to Moliana')        
         self.arrange_widgets()
         
         
@@ -71,7 +76,7 @@ class Moliana_Gui(tkinter.Tk):
                         'bt_opendir_library': tkinter.Button(self, text='...', command=self.browse_dir_library),
                         'bt_opendir_firstlevel': tkinter.Button(self, text='...', command=self.browse_dir_firstlevel),
                         'bt_opendir_report': tkinter.Button(self, text='...', command=self.browse_dir_report),
-                        'bt_run': tkinter.Button(self, text='Run checks', command=self.run_checks),
+                        'bt_run': tkinter.Button(self, text='Run checModel()', command=self.run_checks),
                         'bt_open_report': tkinter.Button(self, text='Open Report', command=self.open_report),
                         'lb_dirpath_dymola': tkinter.Label(self, bg='white', text='Path to Dymola installation'),
                         'lb_dirpath_library': tkinter.Label(self, bg='white', text='Path to Modelica library'),
@@ -83,7 +88,8 @@ class Moliana_Gui(tkinter.Tk):
                         'lb_emptyline3': tkinter.Label(self, bg='white', text=' '),                        
                         'cb_pedantic': tkinter.Checkbutton(self, bg='white', text='Execute checkModel() in pedantic mode', variable=self.VAR['pedantic_mode']),
                         'tf_logger': tkinter.Text(self, width=100, height=15, wrap=tkinter.WORD, borderwidth=3, relief="sunken"),
-                        'sb_scroll': tkinter.Scrollbar(self)
+                        'sb_scroll': tkinter.Scrollbar(self),
+                        'tv_report': ttk.Treeview(self)                        
                         }
 
         #Adaptions
@@ -93,9 +99,24 @@ class Moliana_Gui(tkinter.Tk):
         self.WIDGETS['tf_logger'].tag_config(tkinter.SEL, lmargin1 = 10, lmargin2 = 10, rmargin = 10)
        
 
-        self.WIDGETS['tf_logger'].insert(0.0, 'Moliana - INFO - Welcome to Moliana')
+        self.WIDGETS['tf_logger'].insert(0.0, '')
         
 
+        tv = self.WIDGETS['tv_report']
+        tv['columns'] = ('Result', 'Errors', 'Warnings', 'Notes')
+        tv.heading("#0", text='Model', anchor='w')
+        tv.column("#0", anchor="w")
+        tv.heading('Result', text='Result')
+        tv.column('Result', anchor='center', width=100)
+        tv.heading('Errors', text='Errors')
+        tv.column('Errors', anchor='center', width=100)
+        tv.heading('Warnings', text='Warnings')
+        tv.column('Warnings', anchor='center', width=100)
+        tv.heading('Notes', text='Notes')
+        tv.column('Notes', anchor='center', width=100)        
+        self.WIDGETS['tv_report'] = tv
+
+        
         
 
     def arrange_widgets(self):
@@ -147,6 +168,8 @@ class Moliana_Gui(tkinter.Tk):
         self.WIDGETS['tf_logger'].grid(row = n, column = 0, columnspan = 15, sticky = "WENS")
         self.WIDGETS['sb_scroll'].grid(row = n,column = 15, sticky = "ns") 
         
+        self.generate_treeview()
+        
     def run_checks(self):
         pDym = self.VAR['dirpath_dymola'].get()
         pLib = self.VAR['dirpath_library'].get()
@@ -158,11 +181,34 @@ class Moliana_Gui(tkinter.Tk):
                    }
                    
         dm = moliana.DymolaMode(pLib, pDym, **options)
-        self.Report = dm.execute_check('html')
+        self.Report = dm.execute_check('html')        
+        
+        
+    def generate_treeview(self):
+        tv = self.WIDGETS['tv_report']
+        
+        tv.insert('','end',text='Zeile1',values = (True,0,0,''), tags=('line1','line2'))
+        tv.insert('','end',text='Zeile1',values = (False,1,0,''), tags=('line2'))
+        tv.insert('','end',text='Zeile1',values = (True,0,1,'Bla'))
+        
+        ind = tv.insert('',0, 'new', text='New')
+        tv.insert(ind,1, text = 'bla', values=(False),tags=('try'))
+        tv.insert(ind,0,values = (1))
+        tv.insert(ind,'end',values = (2))
+        tv.insert(ind,'end',values = ('dubi'))
+        
+        tv.tag_configure('line1', background = 'red')
+        tv.tag_configure('line2', background = 'green')
+        tv.tag_configure('try', background = 'yellow')
+        
+        self.WIDGETS['tv_report'] = tv.grid(row=12,column=0, columnspan = 15, sticky='WENS')
+
+
+        
         
     def open_report(self):
-        filepath_report= os.path.join(self.VAR['dirpath_report'].get(), '.html'.format(self.VAR['filename_report'].get()))
-        webbrowser.open(filepath_report)
+        filepath_report= os.path.join(self.VAR['dirpath_report'].get(), '{}.html'.format(self.VAR['filename_report'].get()))
+        webbrowser.open_new(filepath_report)
         
     
     def browse_dir_dymola(self):
