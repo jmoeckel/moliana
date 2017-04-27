@@ -1,0 +1,12 @@
+{
+    "dirpath_first_package": "",
+    "dirpath_molib_preload_molib": "",
+    "filepath_html_report": "report",
+    "check_pedantic_mode": false,
+	"check_first_package": true,
+	"molib_preload_molib": false,
+	"report_export_2html": false,
+	"report_compact_mode": false,
+    "dirpath_dymola_installation": "C:\\Program Files (x86)\\Dymola 2017 FD01",
+    "dirpath_modelica_library": "Q:/Git/AMSUN/HumanBehaviour"
+}

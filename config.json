@@ -1,0 +1,15 @@
+{
+    "init_dirpath_firstlevel": "",
+    "init_dirpath_dependencies": "",
+    "init_filename_htmlreport": "report",
+    "init_box_pedantic": false,
+	"init_box_firstlevel": true,
+	"init_box_dependencies": false,
+	"init_box_htmlreport": false,
+	"init_box_reportmode": false,
+    "init_dirpath_dymola": "C:\\Program Files (x86)\\Dymola 2017 FD01",
+    "init_report_mode": "full",
+    "init_dirpath_htmlreport": "",
+    "init_dirpath_library": "Q:/Git/AMSUN/HumanBehaviour",
+	"init_check_mode": "execute checkModel() + generate html-report + open html-report"
+}

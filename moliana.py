@@ -142,9 +142,9 @@ class DymolaMode(object):
 
         #list of all options
         self._options = ['dymola_pedantic', 'modelica_lib_firstlevel',
-                         'modelica_lib_depth', 'git_mode', 'report_path',
-                         'report_name', 'report_mode', 'report_disp',
-                         'report_colors']
+                         'modelica_lib_depth', 'modelica_lib_dependencies', 
+                         'git_mode', 'report_path', 'report_name', 
+                         'report_mode', 'report_disp', 'report_colors']
 
         #check if all options are allowed
         _Validator('general_kwargs',kwargs,self._options)
@@ -158,6 +158,7 @@ class DymolaMode(object):
         #initialize options with user input or default values
         self.dymola_pedantic = kwargs['dymola_pedantic'] or False
         self.modelica_lib_firstlevel = os.path.join(self.modelica_lib_path, kwargs['modelica_lib_firstlevel'] or '')
+        self.modelica_lib_depencies= kwargs['modelica_lib_dependencies'] or []
         self.modelica_lib_depth =  kwargs['modelica_lib_depth'] or 1
 
         #initialize report attributes
@@ -215,7 +216,9 @@ class DymolaMode(object):
         self._cleanUp(dymola)
 
         if flag == 'html':
+            log.info('Generating html report ...')
             self._Report.generate_html()
+            log.info('... done')
 
         return self._Report
 
@@ -255,8 +258,18 @@ class DymolaMode(object):
         #activate Modelica pedantic check   
         dymola.ExecuteCommand("Advanced.PedanticModelica = {}".format(self.dymola_pedantic))
         
-        #open library     
-        log.info('Loading Modelica library ...')
+        #open library  dependencies       
+        for lib in self.modelica_lib_depencies:
+            libpath= os.path.abspath(lib)
+            log.info('Loading Modelica library {}...'.format(libpath))
+            success = dymola.openModel(os.path.join(libpath, 'package.mo'))
+            if success:
+                log.info('... Done')
+            else:
+                log.error('... Library not loaded')
+        
+        #open library  dependencies
+        log.info('Loading Modelica library {}...'.format(self.modelica_lib_path))
         success = dymola.openModel(os.path.join(self.modelica_lib_path,'package.mo'))
         if success:
             log.info('... Done')
@@ -321,11 +334,11 @@ class DymolaMode(object):
         nWrn = len(re.findall('Warning:', lerr))    
         
         if not success:
-            res = False
+            res = 'Failed'
         elif nWrn > 0:
-            res = True
+            res = 'Warning'
         else:
-            res = True
+            res = 'Passed'
             
         lines = lerr.splitlines()
         if not success and nErr == 0:
@@ -342,7 +355,7 @@ class DymolaMode(object):
            'Wrn': nWrn,
            'Notes': '<br/>'.join(notes), 
            'colPck': 'white',
-           'colRes': '{}'.format(self._Report.colors['cTrue'] if res ==True else self._Report.colors['cFalse']),
+           'colRes': '{}'.format(self._Report.colors['cTrue'] if res =='Passed' else self._Report.colors['cFalse']),
            'colErr': '{}'.format('white' if nErr==0 else self._Report.colors['cErr']),
            'colWrn': '{}'.format('white' if nWrn==0 else self._Report.colors['cWrn'])
            }     
@@ -1064,9 +1077,9 @@ class Converter(object):
         row = ['\n\t\t\t<tr>',
                '\n\t\t\t\t<th style=\"padding-right: 1em; padding-left: 1em; text-align: center\">Package/Model</th>',
                '\n\t\t\t\t<th style=\"padding-right: 1em; padding-left: 1em; text-align: center\">Result</th>',
-               '{}'.format('\n\t\t\t\t<th style=\"padding-right: 1em; padding-left: 1em; text-align: center\">Errors</th>' if mode=='full' else ''),
-               '{}'.format('\n\t\t\t\t<th style=\"padding-right: 1em; padding-left: 1em; text-align: center\">Warnings</th>' if mode=='full' else ''),
-               '{}'.format('\n\t\t\t\t<th style=\"padding-right: 1em; padding-left: 1em; text-align: center\">Notes</th>' if mode=='full' else ''),
+               '{}'.format('\n\t\t\t\t<th style=\"padding-right: 1em; padding-left: 1em; text-align: center\">Errors</th>'),
+               '{}'.format('\n\t\t\t\t<th style=\"padding-right: 1em; padding-left: 1em; text-align: center\">Warnings</th>'),
+               '{}'.format('\n\t\t\t\t<th style=\"padding-right: 1em; padding-left: 1em; text-align: center\">Notes</th>'),
                '\n\t\t\t</tr>']
 
         srow = ''.join('{}'.format(r) for r in row)
@@ -1091,16 +1104,19 @@ class Converter(object):
         """
 
         style ='\"padding-right: 1em; padding-left: 1em; text-align: {}; background-color: {}\"'
+        
+        if mode == 'compact' and dic['Res'] == 'Passed':
+            srow = ''
+        else:    
+            row = ['\n\t\t\t<tr>',
+                   '\n\t\t\t\t<td id=\"Pck\" style={}>{}</td>'.format(style.format('left',dic['colPck']), dic['Pck']),
+                   '\n\t\t\t\t<td id=\"Res\" style={}>{}</td>'.format(style.format('center','{}'.format(dic['colRes'])), dic['Res']),
+                   '{}'.format('\n\t\t\t\t<td id=\"Err\" style={}>{}</td>'.format(style.format('center','{}'.format(dic['colErr'])), dic['Err'])),
+                   '{}'.format('\n\t\t\t\t<td id=\"Wrn\" style={}>{}</td>'.format(style.format('center','{}'.format(dic['colWrn'])), dic['Wrn']) ),
+                   '{}'.format('\n\t\t\t\t<td id=\"Wrn\" style={}>{}</td>'.format(style.format('left','{}'.format('white')), dic['Notes'])),
+                   '\n\t\t\t</tr>']
 
-        row = ['\n\t\t\t<tr>',
-               '\n\t\t\t\t<td id=\"Pck\" style={}>{}</td>'.format(style.format('left',dic['colPck']), dic['Pck']),
-               '\n\t\t\t\t<td id=\"Res\" style={}>{}</td>'.format(style.format('center','{}'.format(dic['colRes'])), dic['Res']),
-               '{}'.format('\n\t\t\t\t<td id=\"Err\" style={}>{}</td>'.format(style.format('center','{}'.format(dic['colErr'])), dic['Err']) if mode=='full' else ''),
-               '{}'.format('\n\t\t\t\t<td id=\"Wrn\" style={}>{}</td>'.format(style.format('center','{}'.format(dic['colWrn'])), dic['Wrn']) if mode=='full' else ''),
-               '{}'.format('\n\t\t\t\t<td id=\"Wrn\" style={}>{}</td>'.format(style.format('left','{}'.format('white')), dic['Notes']) if mode=='full' else ''),
-               '\n\t\t\t</tr>']
-
-        srow = ''.join('{}'.format(r) for r in row)
+            srow = ''.join('{}'.format(r) for r in row)
         return srow
 
 
